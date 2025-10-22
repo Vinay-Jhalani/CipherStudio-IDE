@@ -493,7 +493,7 @@ const SandpackContent = ({ onFilesChange, onSaveRequest, onInitialSync }) => {
                 strokeLinejoin="round"
               />
             </svg>
-            <span>Open Preview</span>
+            <span>Open Preview (New Tab)</span>
           </button>
           <button
             onClick={() => setShowConsole(!showConsole)}
