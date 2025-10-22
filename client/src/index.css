@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Custom scrollbar styling - hide when not needed */
+body {
+  background-color: #151515;
+}
+
+* {
+  scrollbar-width: none;
+  scrollbar-color: #4a5568 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #718096;
+}
+
+/* Specifically target Sandpack file explorer to use auto overflow */
+[class*="sp-"] [class*="wrapper"],
+[class*="sp-"] [class*="container"] {
+  overflow: auto !important;
+}

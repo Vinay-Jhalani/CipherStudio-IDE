@@ -1,0 +1,123 @@
+# Node modules
+node_modules/
+.pnp/
+.pnp.js
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled output
+dist/
+build/
+.next/
+out/
+.cache/
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs & editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Optional npm cache
+.npm/
+
+# Environment variables
+.env
+.env.*.local
+.env.local
+
+# Testing
+coverage/
+*.lcov
+
+# Binaries
+*.exe
+*.out
+*.app
+
+# TypeScript
+*.tsbuildinfo
+
+# Parcel cache
+.cache/
+.parcel-cache/
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Storybook
+.storybook-out/
+
+# Next.js
+.next/
+
+# Mac system files
+Icon?
+
+# Windows system files
+ehthumbs.db
+Desktop.ini
+
+# JetBrains Rider
+.idea/
+
+# SvelteKit (optional)
+.svelte-kit/
+
+# Others (customize as needed)
+tmp/
+temp/
+uploads/
+
+# Local database
+*.sqlite
+*.sqlite3
+
+# PM2 logs
+pids/
+*.pid
+*.log
+
+# Local SSL keys
+*.pem
+*.crt
+*.key
+certs/
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+coverage/
+
+# Ignore local MongoDB dump
+dump/
+
+# Ignore Prisma generated client
+prisma/generated/
+
+# Ignore Swagger generated files
+swagger-output.json
+
+# Ignore Playwright test results
+test-results/
