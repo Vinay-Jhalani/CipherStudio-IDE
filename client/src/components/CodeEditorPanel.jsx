@@ -543,6 +543,8 @@ const CodeEditorPanel = forwardRef((props, ref) => {
   const lastSaveTimeRef = useRef(null);
   const hasInitialSyncedRef = useRef(false); // Track if initial template sync has happened
   const [sandpackKey, setSandpackKey] = useState(0);
+  const autoSaveTimerRef = useRef(null);
+  const filesChangedRef = useRef(false);
 
   // Pass lastSaved to parent via callback if provided
   useEffect(() => {
@@ -569,7 +571,7 @@ const CodeEditorPanel = forwardRef((props, ref) => {
 
   // Save all current Sandpack files to backend (only called manually)
   const saveFilesToBackend = useCallback(
-    async (sandpackFiles) => {
+    async (sandpackFiles, isAutoSave = false) => {
       if (!currentProject) {
         return;
       }
@@ -580,14 +582,19 @@ const CodeEditorPanel = forwardRef((props, ref) => {
       );
 
       if (!hasValidFiles) {
-        alert(
-          "Unable to save: Files are not ready yet. Please wait a moment and try again."
-        );
+        if (!isAutoSave) {
+          alert(
+            "Unable to save: Files are not ready yet. Please wait a moment and try again."
+          );
+        }
         return;
       }
 
       try {
-        setIsSaving(true);
+        // Only show UI indicators for manual saves, not auto-saves
+        if (!isAutoSave) {
+          setIsSaving(true);
+        }
         isSaveOperationRef.current = true;
 
         // Helper function to build file path from projectFiles
@@ -830,18 +837,26 @@ const CodeEditorPanel = forwardRef((props, ref) => {
         }
 
         setLastSaved(new Date());
-        setShowSaveSuccess(true);
-        lastSaveTimeRef.current = Date.now(); // Track save time to prevent immediate reloads
 
-        // Auto-hide success message after 3 seconds
-        setTimeout(() => {
-          setShowSaveSuccess(false);
-        }, 3000);
+        // Only show success message for manual saves
+        if (!isAutoSave) {
+          setShowSaveSuccess(true);
+
+          // Auto-hide success message after 3 seconds
+          setTimeout(() => {
+            setShowSaveSuccess(false);
+          }, 3000);
+        }
+
+        lastSaveTimeRef.current = Date.now(); // Track save time to prevent immediate reloads
       } catch (error) {
         console.error("❌ Error saving files:", error);
         throw error; // Re-throw so the caller knows it failed
       } finally {
-        setIsSaving(false);
+        // Only hide UI indicators for manual saves
+        if (!isAutoSave) {
+          setIsSaving(false);
+        }
         isSaveOperationRef.current = false;
       }
     },
@@ -855,9 +870,54 @@ const CodeEditorPanel = forwardRef((props, ref) => {
     ]
   );
 
-  // Handle file changes from Sandpack (only track, don't auto-save)
+  // Handle file changes from Sandpack (trigger auto-save if enabled)
   const handleFilesChange = useCallback(() => {
-    // No longer storing in ref - we get files directly from Sandpack on save
+    // Don't trigger auto-save during initial load
+    if (isInitialLoadRef.current) {
+      return;
+    }
+
+    // Only auto-save if enabled
+    if (!props.autoSaveEnabled) {
+      return;
+    }
+
+    // Mark that files have changed
+    filesChangedRef.current = true;
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new timer for auto-save (3 seconds after last change)
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (
+        filesChangedRef.current &&
+        !isSaveOperationRef.current &&
+        props.autoSaveEnabled
+      ) {
+        const currentFiles = sandpackContentRef.current?.getCurrentFiles();
+
+        if (currentFiles && Object.keys(currentFiles).length > 0) {
+          try {
+            await saveFilesToBackend(currentFiles, true); // Pass true to indicate auto-save
+            filesChangedRef.current = false;
+          } catch (error) {
+            console.error("Auto-save failed:", error);
+          }
+        }
+      }
+    }, 3000); // Auto-save 3 seconds after last change
+  }, [props.autoSaveEnabled, saveFilesToBackend]);
+
+  // Cleanup auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
   }, []);
 
   // Handle initial sync of template files to MongoDB (for new projects)

@@ -13,6 +13,15 @@ const Editor = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
+    const saved = localStorage.getItem("autoSaveEnabled");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Save auto-save preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("autoSaveEnabled", JSON.stringify(autoSaveEnabled));
+  }, [autoSaveEnabled]);
   const codeEditorRef = useRef(null);
 
   // Helper function to get relative time
@@ -114,7 +123,24 @@ const Editor = () => {
             <h1 className="text-white font-semibold">{currentProject?.name}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Auto-save toggle */}
+          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition">
+            <button
+              onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                autoSaveEnabled ? "bg-indigo-600" : "bg-gray-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoSaveEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <span>Auto-save</span>
+          </label>
+
           <button
             onClick={handleManualSave}
             disabled={isSaving}
@@ -123,6 +149,7 @@ const Editor = () => {
             <FiSave />
             {isSaving ? "Saving..." : "Save"}
           </button>
+
           {lastSaved && !isSaving && (
             <span className="text-xs text-gray-400">
               Last saved: {getRelativeTime(lastSaved)}
@@ -133,7 +160,11 @@ const Editor = () => {
 
       {/* Main Content - Full Width Code Editor with Sandpack File Explorer */}
       <div className="flex-1 overflow-hidden ">
-        <CodeEditorPanel ref={codeEditorRef} onLastSavedChange={setLastSaved} />
+        <CodeEditorPanel
+          ref={codeEditorRef}
+          onLastSavedChange={setLastSaved}
+          autoSaveEnabled={autoSaveEnabled}
+        />
       </div>
     </div>
   );
