@@ -13,6 +13,7 @@ const Editor = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
     const saved = localStorage.getItem("autoSaveEnabled");
     return saved !== null ? JSON.parse(saved) : true;
@@ -125,21 +126,51 @@ const Editor = () => {
         </div>
         <div className="flex items-center gap-3">
           {/* Auto-save toggle */}
-          <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition">
-            <button
-              onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                autoSaveEnabled ? "bg-indigo-600" : "bg-gray-600"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  autoSaveEnabled ? "translate-x-6" : "translate-x-1"
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition">
+              <button
+                onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                  autoSaveEnabled ? "bg-indigo-600" : "bg-gray-600"
                 }`}
-              />
-            </button>
-            <span>Auto-save</span>
-          </label>
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    autoSaveEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span>Auto-save</span>
+            </label>
+
+            {/* Auto-saving indicator */}
+            {isAutoSaving && (
+              <div className="flex items-center gap-1.5 text-xs text-indigo-400 animate-fade-in ml-12">
+                <svg
+                  className="animate-spin h-3.5 w-3.5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 12a8 8 0 018-8m0 16a8 8 0 01-8-8m8-8a8 8 0 018 8m-8 8a8 8 0 008-8"
+                  />
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4V2m0 0l2 2m-2-2l-2 2m0 16v2m0 0l2-2m-2 2l-2-2"
+                  />
+                </svg>
+                <span>Auto saving...</span>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={handleManualSave}
@@ -164,6 +195,7 @@ const Editor = () => {
           ref={codeEditorRef}
           onLastSavedChange={setLastSaved}
           autoSaveEnabled={autoSaveEnabled}
+          onAutoSavingChange={setIsAutoSaving}
         />
       </div>
     </div>

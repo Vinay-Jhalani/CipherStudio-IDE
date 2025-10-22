@@ -291,9 +291,14 @@ const SandpackContent = ({ onFilesChange, onSaveRequest, onInitialSync }) => {
     }
   }, [sandpack.files, onFilesChange]);
 
-  // Also update on mount to ensure initial state is captured
+  // Mark initial mount complete after a short delay to prevent auto-save on load
   useEffect(() => {
-    onFilesChange(sandpack.files);
+    // Give Sandpack time to initialize before we start tracking changes
+    const timer = setTimeout(() => {
+      onFilesChange(sandpack.files);
+    }, 100);
+
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
@@ -546,12 +551,15 @@ const CodeEditorPanel = forwardRef((props, ref) => {
   const autoSaveTimerRef = useRef(null);
   const filesChangedRef = useRef(false);
 
+  // Destructure props to avoid dependency issues
+  const { autoSaveEnabled, onLastSavedChange, onAutoSavingChange } = props;
+
   // Pass lastSaved to parent via callback if provided
   useEffect(() => {
-    if (props.onLastSavedChange && lastSaved) {
-      props.onLastSavedChange(lastSaved);
+    if (onLastSavedChange && lastSaved) {
+      onLastSavedChange(lastSaved);
     }
-  }, [lastSaved, props]);
+  }, [lastSaved, onLastSavedChange]);
 
   // (Removed relative time functions - moved to Editor component)
 
@@ -878,7 +886,7 @@ const CodeEditorPanel = forwardRef((props, ref) => {
     }
 
     // Only auto-save if enabled
-    if (!props.autoSaveEnabled) {
+    if (!autoSaveEnabled) {
       return;
     }
 
@@ -895,21 +903,37 @@ const CodeEditorPanel = forwardRef((props, ref) => {
       if (
         filesChangedRef.current &&
         !isSaveOperationRef.current &&
-        props.autoSaveEnabled
+        autoSaveEnabled
       ) {
         const currentFiles = sandpackContentRef.current?.getCurrentFiles();
 
         if (currentFiles && Object.keys(currentFiles).length > 0) {
           try {
+            // Show auto-saving indicator
+            if (onAutoSavingChange) {
+              onAutoSavingChange(true);
+            }
+
             await saveFilesToBackend(currentFiles, true); // Pass true to indicate auto-save
             filesChangedRef.current = false;
+
+            // Hide auto-saving indicator after 2 seconds
+            setTimeout(() => {
+              if (onAutoSavingChange) {
+                onAutoSavingChange(false);
+              }
+            }, 2000);
           } catch (error) {
             console.error("Auto-save failed:", error);
+            // Hide indicator on error too
+            if (onAutoSavingChange) {
+              onAutoSavingChange(false);
+            }
           }
         }
       }
     }, 3000); // Auto-save 3 seconds after last change
-  }, [props.autoSaveEnabled, saveFilesToBackend]);
+  }, [autoSaveEnabled, onAutoSavingChange, saveFilesToBackend]);
 
   // Cleanup auto-save timer on unmount
   useEffect(() => {
@@ -1059,7 +1083,10 @@ const CodeEditorPanel = forwardRef((props, ref) => {
       setSandpackKey((prev) => prev + 1);
     }
 
-    isInitialLoadRef.current = false;
+    // Mark initial load as complete after a delay to prevent auto-save on initial mount
+    setTimeout(() => {
+      isInitialLoadRef.current = false;
+    }, 1000); // Wait 1 second after files are loaded before enabling auto-save
   }, [projectFiles, currentProject, getFilePath]);
 
   return (
